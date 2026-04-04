@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Food Analytics Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>Food Delivery Analytics Dashboard</h1>
+
+<!-- KPI -->
+<div class="stats">
+    <div class="stat-card">
+        <h3>Total Orders</h3>
+        <p id="totalOrders">0</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Top Food</h3>
+        <p id="topFood">-</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Active Restaurants</h3>
+        <p id="totalRestaurants">0</p>
+    </div>
+</div>
+
+<!-- CHARTS -->
+<div class="container">
+    <div class="card">
+        <h2>Food Trends</h2>
+        <canvas id="foodChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h2> Restaurant Load</h2>
+        <canvas id="restaurantChart"></canvas>
+    </div>
+</div>
+
+<!-- 🧠 BUSINESS INTELLIGENCE -->
+<div class="card">
+    <h2> Business Insights</h2>
+
+    <p id="highDemand"></p>
+    <p id="overloaded"></p>
+    <p id="prediction"></p>
+
+    <h3>City-wise Demand</h3>
+    <ul id="cityList"></ul>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
