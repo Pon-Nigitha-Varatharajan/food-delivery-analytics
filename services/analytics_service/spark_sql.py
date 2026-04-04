@@ -7,7 +7,7 @@ spark = SparkSession.builder.appName("Spark SQL Analytics").getOrCreate()
 
 # Kafka consumer
 process = subprocess.Popen(
-    ["/opt/homebrew/opt/kafka/bin/kafka-console-consumer",
+    ["docker", "exec", "kafka", "kafka-console-consumer",
      "--topic", "food_orders",
      "--bootstrap-server", "localhost:9092"],
     stdout=subprocess.PIPE,

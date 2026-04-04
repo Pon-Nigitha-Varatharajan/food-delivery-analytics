@@ -12,7 +12,7 @@ restaurant_counts = {}
 
 # 🔥 Kafka consumer
 process = subprocess.Popen(
-    ["/opt/homebrew/opt/kafka/bin/kafka-console-consumer",
+    ["docker", "exec", "kafka", "kafka-console-consumer",
      "--topic", "food_orders",
      "--bootstrap-server", "localhost:9092",
      "--from-beginning"],
@@ -36,9 +36,8 @@ for line in process.stdout:
         order_id = int(data.get("order_id", 0))
         location = data.get("location", "unknown")
 
-        # 🔹 Filter valid items
-        valid_items = ["pizza", "burger", "biryani", "sandwich"]
-        if food not in valid_items:
+        # 🔹 Allow all valid items
+        if not food:
             continue
 
         # 🔥 UPDATE COUNTS

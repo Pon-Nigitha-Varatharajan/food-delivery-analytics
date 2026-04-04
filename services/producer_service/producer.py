@@ -8,9 +8,9 @@ producer = KafkaProducer(
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-food_items = ["pizza", "burger", "biryani", "sandwich"]
-locations = ["Coimbatore", "Chennai", "Bangalore"]
-restaurants = [1, 2, 3, 4, 5]
+food_items = ["pizza", "burger", "biryani", "sandwich", "sushi", "tacos", "pasta", "ramen", "noodles", "wrap", "salad", "steak", "curry", "donuts", "waffles", "pancakes", "ice cream", "smoothie", "fried rice", "dumplings"]
+locations = ["Coimbatore", "Chennai", "Bangalore", "Mumbai", "Delhi", "Pune", "Hyderabad", "Kochi", "Kolkata", "Ahmedabad"]
+restaurants = list(range(1, 31))  # 30 restaurants
 
 print("Starting Kafka Producer...")
 
@@ -27,4 +27,4 @@ while True:
     producer.send("food_orders", value=data)
     print("Sent:", data)
 
-    time.sleep(1)
+    time.sleep(0.05)

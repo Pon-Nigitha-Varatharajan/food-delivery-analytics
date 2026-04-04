@@ -1,28 +1,75 @@
 let foodChart, restaurantChart;
 
+// Dynamic neon color generator for the charts
+function generateColors(count) {
+    const baseColors = [
+        '#a78bfa', // Lavender
+        '#c084fc', // Neon purple
+        '#818cf8', // Indigo
+        '#22d3ee', // Cyan
+        '#38bdf8', // Sky Blue
+        '#f472b6', // Pink
+        '#fb7185', // Rose
+    ];
+    let colors = [];
+    for(let i = 0; i < count; i++) {
+        colors.push(baseColors[i % baseColors.length]);
+    }
+    return colors;
+}
+
+// Chart.js global defaults for Dark Theme
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.05)';
+
+// Animated number tick counter
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+let lastTotalOrders = 0;
+
 async function loadData() {
-
-    console.log("Updated at:", new Date().toLocaleTimeString());
-
     try {
         // 🔹 FOOD DATA
         let foodRes = await fetch("http://localhost:5001/food_trends");
         let foodData = await foodRes.json();
 
-        let foodLabels = foodData.map(x => x.food_item);
+        // Sort food ascending because we want largest bar at bottom or top, etc.
+        // Actually, sort descending to show biggest trends
+        foodData.sort((a, b) => b.count - a.count);
+
+        let foodLabels = foodData.map(x => x.food_item.toUpperCase());
         let foodCounts = foodData.map(x => x.count);
 
         let totalOrders = foodCounts.reduce((a,b) => a+b, 0);
-        let maxIndex = foodCounts.indexOf(Math.max(...foodCounts));
 
-        document.getElementById("totalOrders").innerText = totalOrders;
-        document.getElementById("topFood").innerText = foodLabels[maxIndex];
+        // Animate the Top Orders counter instead of just replacing
+        const totalOrdersEl = document.getElementById("totalOrders");
+        animateValue(totalOrdersEl, lastTotalOrders, totalOrders, 800);
+        lastTotalOrders = totalOrders;
 
-        // 🍕 FOOD CHART
+        if (foodLabels.length > 0) {
+            document.getElementById("topFood").innerText = foodLabels[0];
+        }
+
+        // 🍕 FOOD CHART (Bar)
         if (foodChart) {
             foodChart.data.labels = foodLabels;
             foodChart.data.datasets[0].data = foodCounts;
-            foodChart.update('none');
+            foodChart.data.datasets[0].backgroundColor = generateColors(foodLabels.length);
+            // Smooth update animation
+            foodChart.update();
         } else {
             foodChart = new Chart(document.getElementById("foodChart"), {
                 type: 'bar',
@@ -30,12 +77,23 @@ async function loadData() {
                     labels: foodLabels,
                     datasets: [{
                         data: foodCounts,
-                        backgroundColor: ["#38bdf8","#6366f1","#22c55e","#facc15"]
+                        backgroundColor: generateColors(foodLabels.length),
+                        borderRadius: 6,
+                        borderWidth: 0
                     }]
                 },
                 options: {
-                    animation: false,
-                    plugins: { legend: { display: false } }
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 800, easing: 'easeOutQuart' },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(11, 17, 35, 0.9)', titleColor: '#a78bfa', padding: 12 }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, border: {display: false} },
+                        x: { grid: { display: false }, ticks: { font: {size: 10} } }
+                    }
                 }
             });
         }
@@ -43,8 +101,11 @@ async function loadData() {
         // 🔹 RESTAURANT DATA
         let resRes = await fetch("http://localhost:5001/restaurant_load");
         let resData = await resRes.json();
+        
+        // Sort restaurants to make doughnut chart look cleaner
+        resData.sort((a,b) => b.order_count - a.order_count);
 
-        let resLabels = resData.map(x => "R" + x.restaurant_id);
+        let resLabels = resData.map(x => "Kitchen-" + x.restaurant_id);
         let resCounts = resData.map(x => x.order_count);
 
         document.getElementById("totalRestaurants").innerText = resData.length;
@@ -52,7 +113,8 @@ async function loadData() {
         if (restaurantChart) {
             restaurantChart.data.labels = resLabels;
             restaurantChart.data.datasets[0].data = resCounts;
-            restaurantChart.update('none');
+            restaurantChart.data.datasets[0].backgroundColor = generateColors(resLabels.length);
+            restaurantChart.update();
         } else {
             restaurantChart = new Chart(document.getElementById("restaurantChart"), {
                 type: 'doughnut',
@@ -60,11 +122,21 @@ async function loadData() {
                     labels: resLabels,
                     datasets: [{
                         data: resCounts,
-                        backgroundColor: ["#38bdf8","#6366f1","#22c55e","#facc15","#f97316"]
+                        backgroundColor: generateColors(resLabels.length),
+                        borderWidth: 2,
+                        borderColor: '#0b1123',
+                        hoverOffset: 6
                     }]
                 },
                 options: {
-                    animation: false
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 800 },
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(11, 17, 35, 0.9)' }
+                    }
                 }
             });
         }
@@ -73,32 +145,45 @@ async function loadData() {
         let insightRes = await fetch("http://localhost:5001/insights");
         let insights = await insightRes.json();
 
-        document.getElementById("highDemand").innerText =
-            ` High Demand: ${insights.high_demand_food.food_item}`;
-
-        document.getElementById("overloaded").innerText =
-            ` Overloaded Restaurant: R${insights.overloaded_restaurant.restaurant_id}`;
-
-        document.getElementById("prediction").innerText =
-            ` Prediction: ${insights.prediction}`;
+        if (insights.high_demand_food) {
+            document.getElementById("highDemand").innerText = insights.high_demand_food.food_item.toUpperCase();
+        }
+        if (insights.overloaded_restaurant) {
+            document.getElementById("overloaded").innerText = `Kitchen-${insights.overloaded_restaurant.restaurant_id}`;
+        }
+        if (insights.prediction) {
+            document.getElementById("prediction").innerText = insights.prediction;
+        }
 
         // 📍 CITY DATA
         let cityList = document.getElementById("cityList");
         cityList.innerHTML = "";
 
-        insights.city_wise_demand.forEach(c => {
+        // Sort by counts descending
+        let sortedCities = insights.city_wise_demand.sort((a, b) => b.count - a.count);
+
+        sortedCities.forEach(c => {
             let li = document.createElement("li");
-            li.innerText = `${c.city} → ${c.top_food} (${c.count})`;
+            let cityName = document.createElement("span");
+            cityName.innerText = c.city;
+            
+            let dishWrap = document.createElement("span");
+            dishWrap.style.color = 'var(--text-muted)';
+            dishWrap.innerHTML = `<span style="color:var(--primary-neon); font-weight:600;">${c.top_food.toUpperCase()}</span> (${c.count})`;
+            
+            li.appendChild(cityName);
+            li.appendChild(dishWrap);
             cityList.appendChild(li);
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("API Fetch Error:", err);
     }
 }
 
-// 🔥 Refresh every 1 minute
+// 🔥 FAST REFRESH: Every 3 seconds for REAL TIME volume demo
 if (window.dataInterval) clearInterval(window.dataInterval);
-window.dataInterval = setInterval(loadData, 60000);
+window.dataInterval = setInterval(loadData, 3000);
 
-loadData();
+// Initial Load
+setTimeout(loadData, 500); 
