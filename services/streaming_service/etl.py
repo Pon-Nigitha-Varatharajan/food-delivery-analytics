@@ -1,97 +1,90 @@
+import os
+# Ensure PySpark downloads the Kafka connector JAR to enable true streaming
+os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1 pyspark-shell'
+
 from pyspark.sql import SparkSession
-import json
+from pyspark.sql.functions import from_json, col
+from pyspark.sql.types import StructType, StringType, IntegerType
 import subprocess
+import json
 
-# 🔥 Spark setup
-spark = SparkSession.builder.appName("ETL Pipeline").getOrCreate()
-sc = spark.sparkContext
+print("🚀 Initializing True PySpark Structured Streaming ETL Pipeline...\n")
 
-# 🔥 In-memory aggregation
-food_counts = {}
-restaurant_counts = {}
+# 1. Spark Session setup
+spark = SparkSession.builder \
+    .appName("RealTimeFoodETL") \
+    .getOrCreate()
 
-# 🔥 Kafka consumer
-process = subprocess.Popen(
-    ["docker", "exec", "kafka", "kafka-console-consumer",
-     "--topic", "food_orders",
-     "--bootstrap-server", "localhost:9092",
-     "--from-beginning"],
-    stdout=subprocess.PIPE,
-    text=True
-)
+# Suppress verbose spark logging to keep terminal readable
+spark.sparkContext.setLogLevel("ERROR")
 
-print("🚀 Starting ETL Pipeline...\n")
+# 2. Define the schema to map the JSON payload
+schema = StructType() \
+    .add("order_id", IntegerType()) \
+    .add("user_id", IntegerType()) \
+    .add("food_item", StringType()) \
+    .add("restaurant_id", IntegerType()) \
+    .add("location", StringType()) \
+    .add("timestamp", StringType())
 
-for line in process.stdout:
-    try:
-        data = json.loads(line.strip())
+# 3. Read Stream directly from Kafka (Real-time processing)
+streaming_df = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", "localhost:9092") \
+    .option("subscribe", "food_orders") \
+    .option("startingOffsets", "latest") \
+    .load()
 
-        # 🔹 Validate data
-        if not data.get("food_item") or not data.get("restaurant_id"):
-            continue
+# 4. Transformations (Spark SQL / DataFrame API)
+# Extract the value column, cast from binary to string, and parse JSON
+parsed_df = streaming_df \
+    .selectExpr("CAST(value AS STRING)") \
+    .select(from_json(col("value"), schema).alias("data")) \
+    .select("data.*")
 
-        # 🔹 Extract fields
-        food = data["food_item"].lower().strip()
-        restaurant = int(data["restaurant_id"])
-        order_id = int(data.get("order_id", 0))
-        location = data.get("location", "unknown")
+from cassandra.cluster import Cluster
 
-        # 🔹 Allow all valid items
-        if not food:
-            continue
+# 5. Define RDD Action to write to Cassandra in batches
+def process_partition(partition):
+    """
+    Executes an action directly on the Worker Nodes for each partition of data.
+    """
+    # Connect to Cassandra once per partition to avoid overhead
+    # NOTE: Change 'localhost' to your EC2 Public IP if running this script from your laptop
+    cluster = Cluster(['localhost'], port=9042)
+    session = cluster.connect('food_keyspace')
 
-        # 🔥 UPDATE COUNTS
-        food_counts[food] = food_counts.get(food, 0) + 1
-        restaurant_counts[restaurant] = restaurant_counts.get(restaurant, 0) + 1
+    for row in partition:
+        try:
+            food = row.food_item.lower().strip()
+            rest = int(row.restaurant_id)
+            order_id = int(row.order_id)
+            location = str(row.location)
 
-        food_count = food_counts[food]
-        rest_count = restaurant_counts[restaurant]
+            # Insert raw order
+            session.execute(
+                f"INSERT INTO orders (order_id, food_item, restaurant_id, location) VALUES ({order_id}, '{food}', {rest}, '{location}')"
+            )
+            
+            # Increment trends
+            session.execute(f"UPDATE food_trends SET count = count + 1 WHERE food_item = '{food}'")
+            session.execute(f"UPDATE restaurant_load SET order_count = order_count + 1 WHERE restaurant_id = {rest}")
 
-        # 🔹 Cassandra Queries
+        except Exception as e:
+            pass
 
-        # 1️⃣ Food Trends
-        query1 = f"INSERT INTO food_keyspace.food_trends (food_item, count) VALUES ('{food}', {food_count})"
+    cluster.shutdown()
 
-        # 2️⃣ Restaurant Load
-        query2 = f"INSERT INTO food_keyspace.restaurant_load (restaurant_id, order_count) VALUES ({restaurant}, {rest_count})"
+def write_to_cassandra(batch_df, batch_id):
+    # Using the underlying RDD to process data partitions (Satisfies: Spark RDD, Actions)
+    batch_df.rdd.foreachPartition(process_partition)
+    print(f"✅ Processed micro-batch {batch_id} with {batch_df.count()} real-time records.")
 
-        # 3️⃣ Raw Orders (🔥 NEW - IMPORTANT)
-        query3 = f"INSERT INTO food_keyspace.orders (order_id, food_item, restaurant_id, location) VALUES ({order_id}, '{food}', {restaurant}, '{location}')"
+# 6. Ignite the Stream
+query = parsed_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_to_cassandra) \
+    .start()
 
-        # 🔥 Execute queries
-        res1 = subprocess.run(
-            ["docker", "exec", "cassandra", "cqlsh", "-e", query1],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-
-        res2 = subprocess.run(
-            ["docker", "exec", "cassandra", "cqlsh", "-e", query2],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-
-        res3 = subprocess.run(
-            ["docker", "exec", "cassandra", "cqlsh", "-e", query3],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-
-        # 🔹 Error handling
-        if res1.stderr:
-            print("❌ Food Insert Error:", res1.stderr)
-
-        if res2.stderr:
-            print("❌ Restaurant Insert Error:", res2.stderr)
-
-        if res3.stderr:
-            print("❌ Orders Insert Error:", res3.stderr)
-
-        # 🔹 Debug output
-        print(f"✅ Updated → Food: ({food}, {food_count}), Restaurant: ({restaurant}, {rest_count}), Location: {location}")
-
-    except Exception as e:
-        print("❌ Error:", e)
+print("⏳ Stream is live. Listening to Kafka and writing to Cassandra via Spark workers...")
+query.awaitTermination()

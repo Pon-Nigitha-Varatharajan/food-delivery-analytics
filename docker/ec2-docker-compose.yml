@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+
+  api:
+    build: ../services/api_service
+    container_name: food-api
+    ports:
+      - "5001:5000"
+    depends_on:
+      - cassandra
