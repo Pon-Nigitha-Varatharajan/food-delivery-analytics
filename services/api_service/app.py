@@ -45,6 +45,15 @@ while True:
         );
         """)
 
+        session.execute("""
+        CREATE TABLE IF NOT EXISTS orders (
+            order_id INT PRIMARY KEY,
+            food_item TEXT,
+            restaurant_id INT,
+            location TEXT
+        );
+        """)
+
         print("✅ Cassandra ready + tables ensured!")
         break
 

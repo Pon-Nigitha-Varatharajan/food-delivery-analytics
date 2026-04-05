@@ -51,7 +51,7 @@ def process_partition(partition):
     """
     # Connect to Cassandra once per partition to avoid overhead
     # NOTE: Change 'localhost' to your EC2 Public IP if running this script from your laptop
-    cluster = Cluster(['localhost'], port=9042)
+    cluster = Cluster(['56.228.7.202'], port=9042)
     session = cluster.connect('food_keyspace')
 
     for row in partition:
