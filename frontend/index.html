@@ -13,7 +13,19 @@
     <script src="script.js" defer></script>
 </head>
 <body>
-    <div class="dashboard-wrapper">
+    <!-- IAM Role Based Access Control Login -->
+    <div id="iamLoginOverlay" class="iam-login-overlay">
+        <div class="iam-login-card glass-panel">
+            <h2>🔒 IAM Gateway</h2>
+            <p class="subtitle">Role-Based Access Control</p>
+            <input type="text" id="iamUsername" placeholder="IAM Role (e.g., admin or employee)">
+            <input type="password" id="iamPassword" placeholder="Access Key">
+            <button onclick="authenticateBase()">Assume Role</button>
+            <p id="iamError" class="error-text">❌ Unauthorized IAM Role Policy</p>
+        </div>
+    </div>
+
+    <div class="dashboard-wrapper" id="dashboardWrapper" style="display: none;">
         <!-- Sidebar containing Business Intelligence -->
         <aside class="sidebar glass-panel">
             <div class="logo">

@@ -42,7 +42,7 @@ let lastTotalOrders = 0;
 async function loadData() {
     try {
         // 🔹 FOOD DATA
-        let foodRes = await fetch("http://localhost:5001/food_trends");
+        let foodRes = await fetch("http://56.228.7.202:5001/food_trends");
         let foodData = await foodRes.json();
 
         // Sort food ascending because we want largest bar at bottom or top, etc.
@@ -99,7 +99,7 @@ async function loadData() {
         }
 
         // 🔹 RESTAURANT DATA
-        let resRes = await fetch("http://localhost:5001/restaurant_load");
+        let resRes = await fetch("http://56.228.7.202:5001/restaurant_load");
         let resData = await resRes.json();
         
         // Sort restaurants to make doughnut chart look cleaner
@@ -141,8 +141,8 @@ async function loadData() {
             });
         }
 
-        // 🧠 INSIGHTS
-        let insightRes = await fetch("http://localhost:5001/insights");
+        // 🧠 INSIGHTS (IAM Protected)
+        let insightRes = await fetch("http://56.228.7.202:5001/insights");
         let insights = await insightRes.json();
 
         if (insights.high_demand_food) {
@@ -151,7 +151,9 @@ async function loadData() {
         if (insights.overloaded_restaurant) {
             document.getElementById("overloaded").innerText = `Kitchen-${insights.overloaded_restaurant.restaurant_id}`;
         }
-        if (insights.prediction) {
+        
+        // Populate prediction if allowed
+        if (window.iamRole === "admin" && insights.prediction) {
             document.getElementById("prediction").innerText = insights.prediction;
         }
 
@@ -181,9 +183,34 @@ async function loadData() {
     }
 }
 
-// 🔥 FAST REFRESH: Every 3 seconds for REAL TIME volume demo
-if (window.dataInterval) clearInterval(window.dataInterval);
-window.dataInterval = setInterval(loadData, 3000);
+// --- IAM AUTHENTICATION LOGIC ---
+window.iamRole = null;
 
-// Initial Load
-setTimeout(loadData, 500); 
+function authenticateBase() {
+    const user = document.getElementById("iamUsername").value.toLowerCase();
+    
+    if (user === "admin") {
+        window.iamRole = "admin";
+        unlockDashboard();
+    } else if (user === "employee" || user === "user") {
+        window.iamRole = "employee";
+        
+        // Instantly block UI elements before API even loads
+        document.getElementById("prediction").innerText = "🔒 Blocked by IAM Policy";
+        document.getElementById("prediction").className = "value highlight-warn text-glow";
+        
+        unlockDashboard();
+    } else {
+        document.getElementById("iamError").style.display = "block";
+    }
+}
+
+function unlockDashboard() {
+    document.getElementById("iamLoginOverlay").style.display = "none";
+    document.getElementById("dashboardWrapper").style.display = "flex";
+    
+    // Initial Load & Refresh
+    loadData();
+    if (window.dataInterval) clearInterval(window.dataInterval);
+    window.dataInterval = setInterval(loadData, 3000);
+}

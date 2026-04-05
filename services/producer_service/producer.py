@@ -5,7 +5,8 @@ from kafka import KafkaProducer
 
 producer = KafkaProducer(
     bootstrap_servers='localhost:9092',
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+    api_version=(3, 4, 0)
 )
 
 food_items = ["pizza", "burger", "biryani", "sandwich", "sushi", "tacos", "pasta", "ramen", "noodles", "wrap", "salad", "steak", "curry", "donuts", "waffles", "pancakes", "ice cream", "smoothie", "fried rice", "dumplings"]
