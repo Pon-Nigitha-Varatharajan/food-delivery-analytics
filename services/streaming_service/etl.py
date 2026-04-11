@@ -13,6 +13,12 @@ cluster = Cluster(['56.228.7.202'], port=9042)
 session = cluster.connect('food_keyspace')
 print("✅ Connected to Cassandra!")
 
+print("🧹 Wiping previous test data for a clean presentation...")
+session.execute("TRUNCATE food_trends")
+session.execute("TRUNCATE restaurant_load")
+session.execute("TRUNCATE orders")
+print("✨ Database successfully reset to 0!")
+
 # Initialize Local Kafka Consumer
 print("⏳ Connecting to Local Kafka...")
 consumer = KafkaConsumer(

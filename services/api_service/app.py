@@ -117,6 +117,25 @@ def insights():
         # ⚠ OVERLOADED RESTAURANT
         overloaded = max(res_data, key=lambda x: x["order_count"])
 
+        # 🤖 AGENTIC AI: AUTONOMOUS LOAD BALANCER
+        # The Agent sorts the network by load to find the most idle kitchen.
+        sorted_restaurants = sorted(res_data, key=lambda x: x["order_count"], reverse=True)
+        underloaded = sorted_restaurants[-1] # The kitchen with mathematically the lowest orders
+
+        agent_action = None
+        
+        # If the bottleneck is > 50 orders, autonomously issue a redirect action
+        if overloaded["order_count"] >= 50:
+            agent_action = {
+                "status": "CRITICAL",
+                "message": f"Rerouting 40% Delivery Fleet from Kitchen-{overloaded['restaurant_id']} to Kitchen-{underloaded['restaurant_id']}"
+            }
+        else:
+            agent_action = {
+                "status": "NORMAL",
+                "message": "All Kitchen nodes operating optimally."
+            }
+
         # 🔹 CITY-WISE DEMAND (ASSUMING you store location)
         city_rows = session.execute("SELECT location, food_item FROM food_keyspace.orders;")
 
@@ -148,7 +167,8 @@ def insights():
             "high_demand_food": top_food,
             "overloaded_restaurant": overloaded,
             "city_wise_demand": city_insights,
-            "prediction": f"{predicted_food['food_item']} will continue trending"
+            "prediction": f"{predicted_food['food_item']} will continue trending",
+            "load_balancing": agent_action
         })
 
     except Exception as e:

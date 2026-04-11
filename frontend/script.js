@@ -157,6 +157,17 @@ async function loadData() {
             document.getElementById("prediction").innerText = insights.prediction;
         }
 
+        // 🤖 AGENTIC AI: Populate Load Balancing Action if allowed
+        if (window.iamRole === "admin" && insights.load_balancing) {
+            let lbElement = document.getElementById("loadBalance");
+            lbElement.innerText = insights.load_balancing.message;
+            if (insights.load_balancing.status === "CRITICAL") {
+                lbElement.className = "value highlight-warn text-glow pulse";
+            } else {
+                lbElement.className = "value highlight-neon";
+            }
+        }
+
         // 📍 CITY DATA
         let cityList = document.getElementById("cityList");
         cityList.innerHTML = "";
@@ -197,7 +208,10 @@ function authenticateBase() {
         
         // Instantly block UI elements before API even loads
         document.getElementById("prediction").innerText = "🔒 Blocked by IAM Policy";
-        document.getElementById("prediction").className = "value highlight-warn text-glow";
+        document.getElementById("prediction").className = "value highlight-warn";
+        
+        document.getElementById("loadBalance").innerText = "🔒 Blocked by IAM Policy";
+        document.getElementById("loadBalance").className = "value highlight-warn";
         
         unlockDashboard();
     } else {
