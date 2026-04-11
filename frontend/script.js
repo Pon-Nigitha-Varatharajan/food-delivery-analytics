@@ -1,89 +1,77 @@
+/* ═══════════════════════════════════════════
+   NEURALBITES — script.js
+   Environment-aware API, Charts, IAM, City Pills
+   ═══════════════════════════════════════════ */
+
 let foodChart, restaurantChart;
-
-// Dynamic neon color generator for the charts
-function generateColors(count) {
-    const baseColors = [
-        '#a78bfa', // Lavender
-        '#c084fc', // Neon purple
-        '#818cf8', // Indigo
-        '#22d3ee', // Cyan
-        '#38bdf8', // Sky Blue
-        '#f472b6', // Pink
-        '#fb7185', // Rose
-    ];
-    let colors = [];
-    for(let i = 0; i < count; i++) {
-        colors.push(baseColors[i % baseColors.length]);
-    }
-    return colors;
-}
-
-// Chart.js global defaults for Dark Theme
-Chart.defaults.color = '#94a3b8';
-Chart.defaults.font.family = "'Outfit', sans-serif";
-Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.05)';
-
-// Animated number tick counter
-function animateValue(obj, start, end, duration) {
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
-        if (progress < 1) {
-            window.requestAnimationFrame(step);
-        }
-    };
-    window.requestAnimationFrame(step);
-}
-
 let lastTotalOrders = 0;
 
-// 🔥 AUTOMATIC ENVIRONMENT DETECTION
-const hostname = window.location.hostname;
-const API_BASE = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') 
-    ? 'http://localhost:5000'   // Local Flask API runs on 5000
-    : 'http://56.228.7.202:5001'; // Cloud Docker Flask API
+// ── Neon color palette ──
+const COLORS = [
+    '#a78bfa', '#c084fc', '#818cf8',
+    '#22d3ee', '#38bdf8', '#f472b6', '#fb7185'
+];
+function genColors(n) {
+    return Array.from({ length: n }, (_, i) => COLORS[i % COLORS.length]);
+}
 
+// ── Chart.js dark theme defaults ──
+Chart.defaults.color          = '#64748b';
+Chart.defaults.font.family    = "'Outfit', sans-serif";
+Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.04)';
+
+// ── Animated ticker counter ──
+function animateCount(el, start, end, ms) {
+    let t0 = null;
+    const step = ts => {
+        if (!t0) t0 = ts;
+        const p = Math.min((ts - t0) / ms, 1);
+        el.textContent = Math.floor(p * (end - start) + start).toLocaleString();
+        if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
+// ── Environment detection ──
+const hostname = window.location.hostname;
+const API_BASE = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '')
+    ? 'http://localhost:5000'
+    : 'http://56.228.7.202:5001';
+
+// ═══════════════════════════════════════════
+//  MAIN DATA FETCH
+// ═══════════════════════════════════════════
 async function loadData() {
     try {
-        // 🔹 FOOD DATA
-        let foodRes = await fetch(`${API_BASE}/food_trends`);
-        let foodData = await foodRes.json();
 
-        // Sort food ascending because we want largest bar at bottom or top, etc.
-        // Actually, sort descending to show biggest trends
+        /* ── Food Trends ── */
+        const foodData = await fetch(`${API_BASE}/food_trends`).then(r => r.json());
         foodData.sort((a, b) => b.count - a.count);
 
-        let foodLabels = foodData.map(x => x.food_item.toUpperCase());
-        let foodCounts = foodData.map(x => x.count);
+        const foodLabels = foodData.map(x => x.food_item.toUpperCase());
+        const foodCounts = foodData.map(x => x.count);
+        const totalOrders = foodCounts.reduce((a, b) => a + b, 0);
 
-        let totalOrders = foodCounts.reduce((a,b) => a+b, 0);
-
-        // Animate the Top Orders counter instead of just replacing
-        const totalOrdersEl = document.getElementById("totalOrders");
-        animateValue(totalOrdersEl, lastTotalOrders, totalOrders, 800);
+        animateCount(document.getElementById('totalOrders'), lastTotalOrders, totalOrders, 700);
         lastTotalOrders = totalOrders;
 
         if (foodLabels.length > 0) {
-            document.getElementById("topFood").innerText = foodLabels[0];
+            document.getElementById('topFood').textContent = foodLabels[0];
         }
 
-        // 🍕 FOOD CHART (Bar)
         if (foodChart) {
-            foodChart.data.labels = foodLabels;
-            foodChart.data.datasets[0].data = foodCounts;
-            foodChart.data.datasets[0].backgroundColor = generateColors(foodLabels.length);
-            // Smooth update animation
-            foodChart.update();
+            foodChart.data.labels                        = foodLabels;
+            foodChart.data.datasets[0].data              = foodCounts;
+            foodChart.data.datasets[0].backgroundColor   = genColors(foodLabels.length);
+            foodChart.update('active');
         } else {
-            foodChart = new Chart(document.getElementById("foodChart"), {
+            foodChart = new Chart(document.getElementById('foodChart'), {
                 type: 'bar',
                 data: {
                     labels: foodLabels,
                     datasets: [{
                         data: foodCounts,
-                        backgroundColor: generateColors(foodLabels.length),
+                        backgroundColor: genColors(foodLabels.length),
                         borderRadius: 6,
                         borderWidth: 0
                     }]
@@ -91,140 +79,148 @@ async function loadData() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 800, easing: 'easeOutQuart' },
-                    plugins: { 
+                    animation: { duration: 700, easing: 'easeOutQuart' },
+                    plugins: {
                         legend: { display: false },
-                        tooltip: { backgroundColor: 'rgba(11, 17, 35, 0.9)', titleColor: '#a78bfa', padding: 12 }
+                        tooltip: {
+                            backgroundColor: 'rgba(7,9,19,0.95)',
+                            titleColor: '#a78bfa',
+                            bodyColor: '#94a3b8',
+                            padding: 12,
+                            borderColor: 'rgba(139,92,246,0.3)',
+                            borderWidth: 1
+                        }
                     },
                     scales: {
-                        y: { beginAtZero: true, border: {display: false} },
-                        x: { grid: { display: false }, ticks: { font: {size: 10} } }
+                        y: { beginAtZero: true, border: { display: false } },
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } } }
                     }
                 }
             });
         }
 
-        // 🔹 RESTAURANT DATA
-        let resRes = await fetch(`${API_BASE}/restaurant_load`);
-        let resData = await resRes.json();
-        
-        // Sort restaurants to make doughnut chart look cleaner
-        resData.sort((a,b) => b.order_count - a.order_count);
+        /* ── Restaurant Load ── */
+        const resData = await fetch(`${API_BASE}/restaurant_load`).then(r => r.json());
+        resData.sort((a, b) => b.order_count - a.order_count);
 
-        let resLabels = resData.map(x => "Kitchen-" + x.restaurant_id);
-        let resCounts = resData.map(x => x.order_count);
+        const resLabels = resData.map(x => 'Kitchen-' + x.restaurant_id);
+        const resCounts = resData.map(x => x.order_count);
 
-        document.getElementById("totalRestaurants").innerText = resData.length;
+        document.getElementById('totalRestaurants').textContent = resData.length;
 
         if (restaurantChart) {
-            restaurantChart.data.labels = resLabels;
-            restaurantChart.data.datasets[0].data = resCounts;
-            restaurantChart.data.datasets[0].backgroundColor = generateColors(resLabels.length);
-            restaurantChart.update();
+            restaurantChart.data.labels                      = resLabels;
+            restaurantChart.data.datasets[0].data            = resCounts;
+            restaurantChart.data.datasets[0].backgroundColor = genColors(resLabels.length);
+            restaurantChart.update('active');
         } else {
-            restaurantChart = new Chart(document.getElementById("restaurantChart"), {
+            restaurantChart = new Chart(document.getElementById('restaurantChart'), {
                 type: 'doughnut',
                 data: {
                     labels: resLabels,
                     datasets: [{
                         data: resCounts,
-                        backgroundColor: generateColors(resLabels.length),
+                        backgroundColor: genColors(resLabels.length),
                         borderWidth: 2,
-                        borderColor: '#0b1123',
-                        hoverOffset: 6
+                        borderColor: '#070913',
+                        hoverOffset: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 800 },
-                    cutout: '75%',
+                    animation: { duration: 700 },
+                    cutout: '72%',
                     plugins: {
                         legend: { display: false },
-                        tooltip: { backgroundColor: 'rgba(11, 17, 35, 0.9)' }
+                        tooltip: {
+                            backgroundColor: 'rgba(7,9,19,0.95)',
+                            bodyColor: '#94a3b8',
+                            padding: 10
+                        }
                     }
                 }
             });
         }
 
-        // 🧠 INSIGHTS (IAM Protected)
-        let insightRes = await fetch(`${API_BASE}/insights`);
-        let insights = await insightRes.json();
+        /* ── Insights (IAM protected) ── */
+        const insights = await fetch(`${API_BASE}/insights`).then(r => r.json());
 
         if (insights.high_demand_food) {
-            document.getElementById("highDemand").innerText = insights.high_demand_food.food_item.toUpperCase();
+            document.getElementById('highDemand').textContent =
+                insights.high_demand_food.food_item.toUpperCase();
         }
         if (insights.overloaded_restaurant) {
-            document.getElementById("overloaded").innerText = `Kitchen-${insights.overloaded_restaurant.restaurant_id}`;
-        }
-        
-        // Populate prediction if allowed
-        if (window.iamRole === "admin" && insights.prediction) {
-            document.getElementById("prediction").innerText = insights.prediction;
+            document.getElementById('overloaded').textContent =
+                `Kitchen-${insights.overloaded_restaurant.restaurant_id}`;
         }
 
-        // 🤖 AGENTIC AI: Populate Load Balancing Action if allowed
-        if (window.iamRole === "admin" && insights.load_balancing) {
-            let lbElement = document.getElementById("loadBalance");
-            lbElement.innerText = insights.load_balancing.message;
-            if (insights.load_balancing.status === "CRITICAL") {
-                lbElement.className = "value highlight-warn text-glow pulse";
-            } else {
-                lbElement.className = "value highlight-neon";
+        if (window.iamRole === 'admin') {
+            if (insights.prediction) {
+                document.getElementById('prediction').textContent = insights.prediction;
+            }
+            if (insights.load_balancing) {
+                const lb = document.getElementById('loadBalance');
+                lb.textContent = insights.load_balancing.message;
+                lb.className = insights.load_balancing.status === 'CRITICAL'
+                    ? 'icard-value red'
+                    : 'icard-value cyan';
             }
         }
 
-        // 📍 CITY DATA
-        let cityList = document.getElementById("cityList");
-        cityList.innerHTML = "";
-
-        if (insights.city_wise_demand) {
-            // Sort by counts descending
-            let sortedCities = insights.city_wise_demand.sort((a, b) => b.count - a.count);
-
-            sortedCities.forEach(c => {
-                let pill = document.createElement("div");
-                pill.className = "city-pill";
-                pill.innerHTML = `<span class="city-name">${c.city}</span> <span class="city-food">${c.top_food} (${c.count})</span>`;
+        /* ── City Pills ── */
+        if (insights.city_wise_demand && insights.city_wise_demand.length > 0) {
+            const sorted = [...insights.city_wise_demand].sort((a, b) => b.count - a.count);
+            const cityList = document.getElementById('cityList');
+            cityList.innerHTML = '';
+            sorted.forEach(c => {
+                const pill = document.createElement('div');
+                pill.className = 'city-pill';
+                pill.innerHTML =
+                    `<span class="pill-city">${c.city}</span>` +
+                    `<span class="pill-food">${c.top_food}</span>` +
+                    `<span class="pill-count">${c.count}</span>`;
                 cityList.appendChild(pill);
             });
         }
 
     } catch (err) {
-        console.error("API Fetch Error:", err);
+        console.error('API error:', err);
     }
 }
 
-// --- IAM AUTHENTICATION LOGIC ---
+// ═══════════════════════════════════════════
+//  IAM AUTHENTICATION
+// ═══════════════════════════════════════════
 window.iamRole = null;
 
 function authenticateBase() {
-    const user = document.getElementById("iamUsername").value.toLowerCase();
-    
-    if (user === "admin") {
-        window.iamRole = "admin";
+    const user = document.getElementById('iamUsername').value.trim().toLowerCase();
+
+    if (user === 'admin') {
+        window.iamRole = 'admin';
         unlockDashboard();
-    } else if (user === "employee" || user === "user") {
-        window.iamRole = "employee";
-        
-        // Instantly block UI elements before API even loads
-        document.getElementById("prediction").innerText = "🔒 Blocked by IAM Policy";
-        document.getElementById("prediction").className = "value highlight-warn";
-        
-        document.getElementById("loadBalance").innerText = "🔒 Blocked by IAM Policy";
-        document.getElementById("loadBalance").className = "value highlight-warn";
-        
+
+    } else if (user === 'employee' || user === 'user') {
+        window.iamRole = 'employee';
+
+        // Block sensitive fields immediately
+        ['prediction', 'loadBalance'].forEach(id => {
+            const el = document.getElementById(id);
+            el.textContent = '🔒 Blocked by IAM Policy';
+            el.className = 'icard-value red';
+        });
+
         unlockDashboard();
+
     } else {
-        document.getElementById("iamError").style.display = "block";
+        document.getElementById('iamError').style.display = 'block';
     }
 }
 
 function unlockDashboard() {
-    document.getElementById("iamLoginOverlay").style.display = "none";
-    document.getElementById("dashboardWrapper").style.display = "flex";
-    
-    // Initial Load & Refresh
+    document.getElementById('iamLoginOverlay').style.display = 'none';
+    document.getElementById('dashboardWrapper').style.display = 'flex';
     loadData();
     if (window.dataInterval) clearInterval(window.dataInterval);
     window.dataInterval = setInterval(loadData, 3000);

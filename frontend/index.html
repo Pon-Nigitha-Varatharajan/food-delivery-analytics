@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Delivery Analytics Dashboard</title>
-    <!-- Google Fonts: Outfit for modern, clean typography -->
+    <title>NeuralBites — Live Food Delivery Analytics</title>
+    <meta name="description" content="Real-time food delivery analytics dashboard with Agentic AI load balancing and IAM security.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -13,111 +13,123 @@
     <script src="script.js" defer></script>
 </head>
 <body>
-    <!-- IAM Role Based Access Control Login -->
-    <div id="iamLoginOverlay" class="iam-login-overlay">
-        <div class="iam-login-card glass-panel">
-            <h2>🔒 IAM Gateway</h2>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--   IAM GATEWAY LOGIN OVERLAY                 -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="iamLoginOverlay" class="iam-overlay">
+        <div class="iam-card glass-panel">
+            <div class="iam-logo">🔒</div>
+            <h2>IAM Gateway</h2>
             <p class="subtitle">Role-Based Access Control</p>
-            <input type="text" id="iamUsername" placeholder="IAM Role (e.g., admin or employee)">
+            <input type="text" id="iamUsername" placeholder="IAM Role (admin / employee)" autocomplete="off">
             <input type="password" id="iamPassword" placeholder="Access Key">
-            <button onclick="authenticateBase()">Assume Role</button>
+            <button onclick="authenticateBase()">Assume Role →</button>
             <p id="iamError" class="error-text">❌ Unauthorized IAM Role Policy</p>
         </div>
     </div>
 
-    <div class="dashboard-wrapper" id="dashboardWrapper" style="display: none;">
-        <!-- Sidebar containing Business Intelligence -->
+    <!-- ═══════════════════════════════════════════ -->
+    <!--   MAIN DASHBOARD                            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="dashboard-wrapper" id="dashboardWrapper" style="display:none;">
+
+        <!-- ─── LEFT SIDEBAR ─── -->
         <aside class="sidebar glass-panel">
             <div class="logo">
                 <h2>🍔 Neural<span class="highlight">Bites</span></h2>
-                <p>Live Analytics</p>
+                <p class="logo-sub">Live Analytics</p>
             </div>
 
-            <div class="insights-section">
-                <h3>🧠 Intelligence</h3>
-                <div class="insight-card">
-                    <span class="icon">🔥</span>
-                    <div>
-                        <p class="label">Trending Now</p>
-                        <p class="value highlight-neon" id="highDemand">Loading...</p>
-                    </div>
-                </div>
-                <div class="insight-card">
-                    <span class="icon">⚠️</span>
-                    <div>
-                        <p class="label">Overloaded Kitchen</p>
-                        <p class="value highlight-warn" id="overloaded">Loading...</p>
-                    </div>
-                </div>
-                <div class="insight-card">
-                    <span class="icon">🔮</span>
-                    <div>
-                        <p class="label">Prediction Log</p>
-                        <p class="value highlight-purple" id="prediction">Loading...</p>
-                    </div>
-                </div>
-                
-                <!-- 🤖 AGENTIC AI: LOAD BALANCER -->
-                <div class="insight-card">
-                    <span class="icon">🔀</span>
-                    <div>
-                        <p class="label">Agentic Load Balancer</p>
-                        <p class="value highlight-neon" id="loadBalance">Monitoring...</p>
-                    </div>
+            <div class="divider"></div>
+
+            <div class="section-label">🧠 Intelligence</div>
+
+            <div class="insight-card">
+                <span class="icard-icon">🔥</span>
+                <div class="icard-body">
+                    <p class="icard-label">Trending Now</p>
+                    <p class="icard-value cyan" id="highDemand">Loading...</p>
                 </div>
             </div>
 
+            <div class="insight-card">
+                <span class="icard-icon">⚠️</span>
+                <div class="icard-body">
+                    <p class="icard-label">Overloaded Kitchen</p>
+                    <p class="icard-value red" id="overloaded">Loading...</p>
+                </div>
+            </div>
+
+            <div class="insight-card">
+                <span class="icard-icon">🔮</span>
+                <div class="icard-body">
+                    <p class="icard-label">Prediction Log</p>
+                    <p class="icard-value purple" id="prediction">Loading...</p>
+                </div>
+            </div>
+
+            <div class="insight-card agent-card">
+                <span class="icard-icon">🤖</span>
+                <div class="icard-body">
+                    <p class="icard-label">Agentic Load Balancer</p>
+                    <p class="icard-value cyan" id="loadBalance">Monitoring...</p>
+                </div>
+            </div>
         </aside>
 
-        <!-- Main Content Area -->
+        <!-- ─── MAIN CONTENT ─── -->
         <main class="main-content">
+
+            <!-- Top Nav -->
             <header class="top-nav glass-panel">
                 <h1>Overview <span class="badge pulse">LIVE</span></h1>
-                <div class="status-indicator">
-                    <div class="dot blinking"></div>
-                    <span>Streaming Active</span>
+                <div class="status-pill">
+                    <span class="dot blink"></span>
+                    Streaming Active
                 </div>
             </header>
 
-            <!-- KPIs -->
+            <!-- KPI Row -->
             <section class="kpi-grid">
                 <div class="kpi-card glass-panel">
-                    <h3>Total Orders Processed</h3>
-                    <p class="kpi-value ticker" id="totalOrders">0</p>
+                    <p class="kpi-label">Total Orders Processed</p>
+                    <p class="kpi-value" id="totalOrders">0</p>
                 </div>
                 <div class="kpi-card glass-panel">
-                    <h3>Overall Top Dish</h3>
-                    <p class="kpi-value text-glow" id="topFood">-</p>
+                    <p class="kpi-label">Overall Top Dish</p>
+                    <p class="kpi-value glow-purple" id="topFood">—</p>
                 </div>
                 <div class="kpi-card glass-panel">
-                    <h3>Active Delivery Zones</h3>
-                    <p class="kpi-value ticker" id="totalRestaurants">0</p>
-                </div>
-            </section>
-            
-            <!-- Top Dishes By City (Horizontal) -->
-            <section class="cities-horizontal glass-panel custom-scrollbar">
-                <h3>📍 Top Dishes By City</h3>
-                <div id="cityList" class="city-pill-container">
-                    <!-- Dynamic Pills -->
+                    <p class="kpi-label">Active Delivery Zones</p>
+                    <p class="kpi-value" id="totalRestaurants">0</p>
                 </div>
             </section>
 
-            <!-- Charts -->
+            <!-- Charts Row -->
             <section class="charts-grid">
-                <div class="chart-container glass-panel">
-                    <h2>Global Food Trends</h2>
-                    <div class="canvas-wrapper">
+                <div class="chart-card glass-panel">
+                    <h3>Global Food Trends</h3>
+                    <div class="canvas-wrap">
                         <canvas id="foodChart"></canvas>
                     </div>
                 </div>
-                <div class="chart-container glass-panel">
-                    <h2>Restaurant Fulfillment Load</h2>
-                    <div class="canvas-wrapper">
+                <div class="chart-card glass-panel">
+                    <h3>Restaurant Fulfillment Load</h3>
+                    <div class="canvas-wrap">
                         <canvas id="restaurantChart"></canvas>
                     </div>
                 </div>
             </section>
+
+            <!-- Top Dishes By City -->
+            <section class="city-section glass-panel">
+                <h3 class="city-title">📍 Top Dishes By City</h3>
+                <div id="cityList" class="city-grid">
+                    <p class="city-placeholder">Waiting for data stream...</p>
+                </div>
+            </section>
+
         </main>
     </div>
 </body>
