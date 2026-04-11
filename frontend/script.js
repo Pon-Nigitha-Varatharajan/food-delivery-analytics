@@ -39,10 +39,16 @@ function animateValue(obj, start, end, duration) {
 
 let lastTotalOrders = 0;
 
+// 🔥 AUTOMATIC ENVIRONMENT DETECTION
+const hostname = window.location.hostname;
+const API_BASE = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') 
+    ? 'http://localhost:5000'   // Local Flask API runs on 5000
+    : 'http://56.228.7.202:5001'; // Cloud Docker Flask API
+
 async function loadData() {
     try {
         // 🔹 FOOD DATA
-        let foodRes = await fetch("http://56.228.7.202:5001/food_trends");
+        let foodRes = await fetch(`${API_BASE}/food_trends`);
         let foodData = await foodRes.json();
 
         // Sort food ascending because we want largest bar at bottom or top, etc.
@@ -99,7 +105,7 @@ async function loadData() {
         }
 
         // 🔹 RESTAURANT DATA
-        let resRes = await fetch("http://56.228.7.202:5001/restaurant_load");
+        let resRes = await fetch(`${API_BASE}/restaurant_load`);
         let resData = await resRes.json();
         
         // Sort restaurants to make doughnut chart look cleaner
@@ -142,7 +148,7 @@ async function loadData() {
         }
 
         // 🧠 INSIGHTS (IAM Protected)
-        let insightRes = await fetch("http://56.228.7.202:5001/insights");
+        let insightRes = await fetch(`${API_BASE}/insights`);
         let insights = await insightRes.json();
 
         if (insights.high_demand_food) {

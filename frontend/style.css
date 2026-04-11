@@ -58,6 +58,7 @@ body {
     padding: 2rem 1.5rem;
     gap: 2rem;
     animation: slideInLeft 0.5s ease-out;
+    overflow-y: auto;
 }
 
 .logo h2 {

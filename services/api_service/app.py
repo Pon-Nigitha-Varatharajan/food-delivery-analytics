@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from cassandra.cluster import Cluster
 from flask_cors import CORS
 import time
+import platform
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +17,9 @@ while True:
     try:
         print("🔄 Trying to connect to Cassandra...")
 
-        cluster = Cluster(["cassandra"], port=9042)
+        # 🌐 AUTOMATIC ENVIRONMENT DETECTION
+        cassandra_host = "56.228.7.202" if platform.system() == "Windows" else "cassandra"
+        cluster = Cluster([cassandra_host], port=9042)
         session = cluster.connect()
 
         print("✅ Connected to Cassandra!")
