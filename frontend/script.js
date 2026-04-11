@@ -178,22 +178,17 @@ async function loadData() {
         let cityList = document.getElementById("cityList");
         cityList.innerHTML = "";
 
-        // Sort by counts descending
-        let sortedCities = insights.city_wise_demand.sort((a, b) => b.count - a.count);
+        if (insights.city_wise_demand) {
+            // Sort by counts descending
+            let sortedCities = insights.city_wise_demand.sort((a, b) => b.count - a.count);
 
-        sortedCities.forEach(c => {
-            let li = document.createElement("li");
-            let cityName = document.createElement("span");
-            cityName.innerText = c.city;
-            
-            let dishWrap = document.createElement("span");
-            dishWrap.style.color = 'var(--text-muted)';
-            dishWrap.innerHTML = `<span style="color:var(--primary-neon); font-weight:600;">${c.top_food.toUpperCase()}</span> (${c.count})`;
-            
-            li.appendChild(cityName);
-            li.appendChild(dishWrap);
-            cityList.appendChild(li);
-        });
+            sortedCities.forEach(c => {
+                let pill = document.createElement("div");
+                pill.className = "city-pill";
+                pill.innerHTML = `<span class="city-name">${c.city}</span> <span class="city-food">${c.top_food} (${c.count})</span>`;
+                cityList.appendChild(pill);
+            });
+        }
 
     } catch (err) {
         console.error("API Fetch Error:", err);

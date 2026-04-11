@@ -38,6 +38,7 @@ body {
     height: 100vh;
     padding: 1rem;
     gap: 1.5rem;
+    overflow: hidden; /* Force strict bounds */
 }
 
 /* Glassmorphism Utility */
@@ -124,32 +125,60 @@ body {
 .highlight-neon { color: var(--secondary-neon); text-shadow: 0 0 8px rgba(34, 211, 238, 0.5); }
 .highlight-warn { color: var(--warn-neon); text-shadow: 0 0 8px rgba(251, 113, 133, 0.5); }
 .highlight-purple { color: var(--primary-neon); text-shadow: 0 0 8px rgba(167, 139, 250, 0.5); }
-
-.cities-section {
-    flex-grow: 1;
+/* Cities Horizontal Bar */
+.cities-horizontal {
     display: flex;
-    flex-direction: column;
-    min-height: 0; /* Critical flexbox magic to allow internal scrolling */
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 1.7rem;
+    overflow-x: auto;
+    animation: fadeIn 0.8s ease-out;
 }
 
-#cityList {
-    list-style: none;
-    overflow-y: auto;
-    padding-right: 0.5rem;
-    flex-grow: 1;
+.cities-horizontal h3 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    white-space: nowrap;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-#cityList li {
-    padding: 0.8rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 0.95rem;
+.city-pill-container {
     display: flex;
-    justify-content: space-between;
-    transition: background 0.2s ease;
+    gap: 1rem;
 }
-#cityList li:hover {
+
+.city-pill {
     background: rgba(167, 139, 250, 0.1);
-    border-radius: 8px;
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    padding: 0.6rem 1.2rem;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.city-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(167, 139, 250, 0.2);
+    border-color: rgba(167, 139, 250, 0.4);
+}
+
+.city-name {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.city-food {
+    color: var(--secondary-neon);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Custom Scrollbar */
