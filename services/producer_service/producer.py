@@ -9,17 +9,26 @@ producer = KafkaProducer(
 )
 
 food_items = ["pizza", "burger", "biryani", "sandwich", "sushi", "tacos", "pasta", "ramen", "noodles", "wrap", "salad", "steak", "curry", "donuts", "waffles", "pancakes", "ice cream", "smoothie", "fried rice", "dumplings"]
-locations = ["Coimbatore", "Chennai", "Bangalore", "Mumbai", "Delhi", "Pune", "Hyderabad", "Kochi", "Kolkata", "Ahmedabad"]
-restaurants = list(range(1, 31))  # 30 restaurants
 
-print("Starting Kafka Producer...")
+locations = ["Coimbatore", "Chennai", "Bangalore", "Mumbai", "Delhi", "Pune", "Hyderabad", "Kochi", "Kolkata", "Ahmedabad"]
+
+restaurants = list(range(1, 31))
+
+print("🔥 Starting Kafka Producer with BIAS...")
 
 while True:
+    
+    # 🔥 BIAS LOGIC (IMPORTANT)
+    if random.random() < 0.7:
+        restaurant = 5   # 🎯 overload this kitchen
+    else:
+        restaurant = random.choice(restaurants)
+
     data = {
         "order_id": random.randint(1000, 9999),
         "user_id": random.randint(1, 100),
         "food_item": random.choice(food_items),
-        "restaurant_id": random.choice(restaurants),
+        "restaurant_id": restaurant,
         "location": random.choice(locations),
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
     }

@@ -4,17 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Delivery Analytics Dashboard</title>
-    <!-- Google Fonts: Outfit for modern, clean typography -->
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="script.js" defer></script>
 </head>
+
 <body>
     <div class="dashboard-wrapper">
-        <!-- Sidebar containing Business Intelligence -->
+
+        <!-- Sidebar -->
         <aside class="sidebar glass-panel">
             <div class="logo">
                 <h2>🍔 Neural<span class="highlight">Bites</span></h2>
@@ -23,6 +27,8 @@
 
             <div class="insights-section">
                 <h3>🧠 Intelligence</h3>
+
+                <!-- 🔥 Trending -->
                 <div class="insight-card">
                     <span class="icon">🔥</span>
                     <div>
@@ -30,6 +36,8 @@
                         <p class="value highlight-neon" id="highDemand">Loading...</p>
                     </div>
                 </div>
+
+                <!-- ⚠ Overloaded -->
                 <div class="insight-card">
                     <span class="icon">⚠️</span>
                     <div>
@@ -37,6 +45,8 @@
                         <p class="value highlight-warn" id="overloaded">Loading...</p>
                     </div>
                 </div>
+
+                <!-- 🔮 Prediction -->
                 <div class="insight-card">
                     <span class="icon">🔮</span>
                     <div>
@@ -44,18 +54,29 @@
                         <p class="value highlight-purple" id="prediction">Loading...</p>
                     </div>
                 </div>
+
+                <!-- 🤖 NEW: LOAD BALANCING -->
+                <div class="insight-card">
+                    <span class="icon">🔀</span>
+                    <div>
+                        <p class="label">Load Balancing</p>
+                        <p class="value highlight-neon" id="loadBalance">Monitoring...</p>
+                    </div>
+                </div>
+
             </div>
 
+            <!-- 📍 City -->
             <div class="cities-section">
                 <h3>📍 Top Dishes By City</h3>
                 <ul id="cityList" class="custom-scrollbar">
-                    <!-- Dynamic List -->
                 </ul>
             </div>
         </aside>
 
-        <!-- Main Content Area -->
+        <!-- Main -->
         <main class="main-content">
+
             <header class="top-nav glass-panel">
                 <h1>Overview <span class="badge pulse">LIVE</span></h1>
                 <div class="status-indicator">
@@ -70,10 +91,12 @@
                     <h3>Total Orders Processed</h3>
                     <p class="kpi-value ticker" id="totalOrders">0</p>
                 </div>
+
                 <div class="kpi-card glass-panel">
                     <h3>Overall Top Dish</h3>
                     <p class="kpi-value text-glow" id="topFood">-</p>
                 </div>
+
                 <div class="kpi-card glass-panel">
                     <h3>Active Delivery Zones</h3>
                     <p class="kpi-value ticker" id="totalRestaurants">0</p>
@@ -88,6 +111,7 @@
                         <canvas id="foodChart"></canvas>
                     </div>
                 </div>
+
                 <div class="chart-container glass-panel">
                     <h2>Restaurant Fulfillment Load</h2>
                     <div class="canvas-wrapper">
@@ -95,6 +119,7 @@
                     </div>
                 </div>
             </section>
+
         </main>
     </div>
 </body>

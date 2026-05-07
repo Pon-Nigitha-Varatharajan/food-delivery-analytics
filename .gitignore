@@ -54,3 +54,4 @@ desktop.ini
 
 # Docker
 .docker/
+spark/
